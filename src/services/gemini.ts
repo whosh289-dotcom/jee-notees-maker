@@ -1,17 +1,34 @@
 import { GoogleGenAI } from "@google/genai";
 
 const getApiKey = () => {
-  const key = process.env.GEMINI_API_KEY || 
-              process.env.GOOGLE_API_KEY ||
-              process.env.API_KEY ||
-              (import.meta as any).env?.GEMINI_API_KEY || 
-              (import.meta as any).env?.VITE_GEMINI_API_KEY || 
-              (import.meta as any).env?.GOOGLE_API_KEY ||
-              (import.meta as any).env?.VITE_GOOGLE_API_KEY ||
-              (import.meta as any).env?.API_KEY ||
-              "";
+  // Try known keys first
+  const knownKey = process.env.GEMINI_API_KEY || 
+                   process.env.GOOGLE_API_KEY ||
+                   process.env.API_KEY ||
+                   (import.meta as any).env?.VITE_GEMINI_API_KEY || 
+                   (import.meta as any).env?.VITE_GOOGLE_API_KEY ||
+                   (import.meta as any).env?.VITE_API_KEY;
   
-  return key;
+  if (knownKey && knownKey !== "undefined" && knownKey !== "null" && knownKey.length > 5) {
+    return knownKey;
+  }
+
+  // Fallback: search all process.env keys for anything that looks like an API key
+  try {
+    const allEnv = process.env as Record<string, string>;
+    for (const key in allEnv) {
+      if ((key.includes('KEY') || key.includes('GEMINI') || key.includes('GOOGLE')) && 
+          allEnv[key] && 
+          allEnv[key].length > 10) {
+        console.log(`Using detected key from environment variable: ${key}`);
+        return allEnv[key];
+      }
+    }
+  } catch (e) {
+    // process.env might not be iterable in some environments
+  }
+  
+  return "";
 };
 
 export const SYSTEM_PROMPT = `
