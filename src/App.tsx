@@ -25,9 +25,16 @@ export default function App() {
 
   useEffect(() => {
     // Check for API key
-    const key = process.env.GEMINI_API_KEY || (import.meta as any).env?.VITE_GEMINI_API_KEY;
+    const key = process.env.GEMINI_API_KEY || 
+                process.env.GOOGLE_API_KEY ||
+                (import.meta as any).env?.GEMINI_API_KEY ||
+                (import.meta as any).env?.VITE_GEMINI_API_KEY ||
+                (import.meta as any).env?.GOOGLE_API_KEY;
+                
     if (!key || key === "undefined" || key === "null") {
       setApiKeyMissing(true);
+    } else {
+      setApiKeyMissing(false);
     }
     
     // Session Persistence Acknowledgment
