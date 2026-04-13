@@ -27,9 +27,12 @@ export default function App() {
     // Check for API key
     const key = process.env.GEMINI_API_KEY || 
                 process.env.GOOGLE_API_KEY ||
+                process.env.API_KEY ||
                 (import.meta as any).env?.GEMINI_API_KEY ||
                 (import.meta as any).env?.VITE_GEMINI_API_KEY ||
-                (import.meta as any).env?.GOOGLE_API_KEY;
+                (import.meta as any).env?.GOOGLE_API_KEY ||
+                (import.meta as any).env?.VITE_GOOGLE_API_KEY ||
+                (import.meta as any).env?.API_KEY;
                 
     if (!key || key === "undefined" || key === "null") {
       setApiKeyMissing(true);
@@ -98,8 +101,9 @@ export default function App() {
       {/* Header */}
       <header className="bg-white border-b border-zinc-200 sticky top-0 z-50 print:hidden">
         {apiKeyMissing && (
-          <div className="bg-jee-red text-white text-center py-2 text-xs font-bold animate-pulse">
-            ⚠️ GEMINI_API_KEY NOT DETECTED. PLEASE CONFIGURE IN SETTINGS.
+          <div className="bg-jee-red text-white text-center py-2 text-xs font-bold animate-pulse flex items-center justify-center gap-2">
+            ⚠️ GEMINI_API_KEY NOT DETECTED. 
+            <span className="opacity-70 font-normal italic">(Check Settings {'->'} Secrets)</span>
           </div>
         )}
         <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
