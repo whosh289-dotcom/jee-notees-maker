@@ -21,59 +21,11 @@ export default function App() {
   const [isLoading, setIsLoading] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
   const [history, setHistory] = useState<string[]>([]);
-  const [apiKeyMissing, setApiKeyMissing] = useState(false);
-  const [isPlatformKey, setIsPlatformKey] = useState(false);
 
   useEffect(() => {
-    const checkKey = async () => {
-      // Check for manual key first
-      const key = process.env.GEMINI_API_KEY || 
-                  process.env.GOOGLE_API_KEY ||
-                  process.env.API_KEY ||
-                  (import.meta as any).env?.GEMINI_API_KEY ||
-                  (import.meta as any).env?.VITE_GEMINI_API_KEY ||
-                  (import.meta as any).env?.GOOGLE_API_KEY ||
-                  (import.meta as any).env?.VITE_GOOGLE_API_KEY ||
-                  (import.meta as any).env?.API_KEY;
-                  
-      if (key && key !== "undefined" && key !== "null" && key.length > 5) {
-        setApiKeyMissing(false);
-        return;
-      }
-
-      // Check for platform key
-      if ((window as any).aistudio?.hasSelectedApiKey) {
-        try {
-          const hasKey = await (window as any).aistudio.hasSelectedApiKey();
-          if (hasKey) {
-            setApiKeyMissing(false);
-            setIsPlatformKey(true);
-            return;
-          }
-        } catch (e) {
-          console.warn("Error checking platform key:", e);
-        }
-      }
-
-      setApiKeyMissing(true);
-    };
-
-    // Initial check
-    checkKey();
-    
-    // Retry after 2 seconds to handle race conditions
-    const timer = setTimeout(checkKey, 2000);
-    
-    return () => clearTimeout(timer);
+    // Session Persistence Acknowledgment
+    console.log("JEE Session Architect: Session active. Logic established. Tracking terminology.");
   }, []);
-
-  const handleSelectKey = async () => {
-    if ((window as any).aistudio?.openSelectKey) {
-      await (window as any).aistudio.openSelectKey();
-      setApiKeyMissing(false);
-      setIsPlatformKey(true);
-    }
-  };
 
   const handleGenerate = async (data: string, fileContext?: string) => {
     setIsLoading(true);
@@ -110,8 +62,6 @@ export default function App() {
         message += "The request was flagged by safety filters. Try rephrasing your input.";
       } else if (errorStr.includes('Requested entity was not found')) {
         message += "The selected API key is invalid or not found. Please re-select your key.";
-        setApiKeyMissing(true);
-        setIsPlatformKey(false);
       } else {
         message += `Error details: ${errorStr.slice(0, 100)}${errorStr.length > 100 ? '...' : ''}`;
       }
@@ -147,16 +97,6 @@ export default function App() {
           </div>
 
           <div className="flex items-center gap-4">
-            {apiKeyMissing && (
-              <button 
-                onClick={handleSelectKey}
-                className="flex items-center gap-1.5 px-2 py-1 bg-amber-50 text-amber-600 rounded-md border border-amber-100 text-[10px] font-bold hover:bg-amber-100 transition-colors"
-                title="API Key not detected. Click to select platform key."
-              >
-                <Info className="w-3 h-3" />
-                API STATUS
-              </button>
-            )}
             {notes && (
               <>
                 <button

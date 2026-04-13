@@ -89,10 +89,6 @@ Before outputting, verify:
 
 export async function generateJEENotes(roughData: string, fileContext?: string) {
   const apiKey = getApiKey();
-  if (!apiKey || apiKey === "undefined" || apiKey === "null") {
-    throw new Error("GEMINI_API_KEY is not set. Please ensure your Gemini API key is configured in the settings.");
-  }
-
   const ai = new GoogleGenAI({ apiKey });
 
   const prompt = fileContext 
