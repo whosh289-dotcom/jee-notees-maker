@@ -21,8 +21,15 @@ export default function App() {
   const [isLoading, setIsLoading] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
   const [history, setHistory] = useState<string[]>([]);
+  const [apiKeyMissing, setApiKeyMissing] = useState(false);
 
   useEffect(() => {
+    // Check for API key
+    const key = process.env.GEMINI_API_KEY || (import.meta as any).env?.VITE_GEMINI_API_KEY;
+    if (!key || key === "undefined" || key === "null") {
+      setApiKeyMissing(true);
+    }
+    
     // Session Persistence Acknowledgment
     console.log("JEE Session Architect: Session active. Logic established. Tracking terminology.");
   }, []);
@@ -83,6 +90,11 @@ export default function App() {
     <div className="min-h-screen bg-zinc-100 pb-20 selection:bg-jee-blue/20">
       {/* Header */}
       <header className="bg-white border-b border-zinc-200 sticky top-0 z-50 print:hidden">
+        {apiKeyMissing && (
+          <div className="bg-jee-red text-white text-center py-2 text-xs font-bold animate-pulse">
+            ⚠️ GEMINI_API_KEY NOT DETECTED. PLEASE CONFIGURE IN SETTINGS.
+          </div>
+        )}
         <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-jee-black rounded-xl flex items-center justify-center shadow-lg">

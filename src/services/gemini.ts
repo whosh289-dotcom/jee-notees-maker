@@ -1,6 +1,13 @@
 import { GoogleGenAI } from "@google/genai";
 
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || "" });
+const getApiKey = () => {
+  return process.env.GEMINI_API_KEY || 
+         (import.meta as any).env?.GEMINI_API_KEY || 
+         (import.meta as any).env?.VITE_GEMINI_API_KEY || 
+         "";
+};
+
+const ai = new GoogleGenAI({ apiKey: getApiKey() });
 
 export const SYSTEM_PROMPT = `
 # ROLE
@@ -76,8 +83,9 @@ Before outputting, verify:
 `;
 
 export async function generateJEENotes(roughData: string, fileContext?: string) {
-  if (!process.env.GEMINI_API_KEY) {
-    throw new Error("GEMINI_API_KEY is not set");
+  const apiKey = getApiKey();
+  if (!apiKey || apiKey === "undefined" || apiKey === "null") {
+    throw new Error("GEMINI_API_KEY is not set. Please ensure your Gemini API key is configured in the settings.");
   }
 
   const prompt = fileContext 
