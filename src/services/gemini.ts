@@ -4,7 +4,6 @@ const getApiKey = () => {
   const key = process.env.GEMINI_API_KEY || 
               process.env.GOOGLE_API_KEY ||
               process.env.API_KEY ||
-              (process.env as any).PLATFORM_API_KEY ||
               (import.meta as any).env?.GEMINI_API_KEY || 
               (import.meta as any).env?.VITE_GEMINI_API_KEY || 
               (import.meta as any).env?.GOOGLE_API_KEY ||
