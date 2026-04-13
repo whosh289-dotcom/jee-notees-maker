@@ -84,35 +84,44 @@ export async function generateJEENotes(roughData: string, fileContext?: string) 
     ? `FILE CONTEXT:\n${fileContext}\n\nUSER INPUT:\n${roughData}`
     : roughData;
 
-  const maxRetries = 3;
+  const maxRetries = 5;
   let lastError: any = null;
+  const modelsToTry = [
+    "gemini-3.1-pro-preview", 
+    "gemini-3-flash-preview", 
+    "gemini-3.1-flash-lite-preview"
+  ];
 
-  for (let attempt = 0; attempt <= maxRetries; attempt++) {
-    try {
-      const response = await ai.models.generateContent({
-        model: "gemini-3.1-pro-preview",
-        contents: prompt,
-        config: {
-          systemInstruction: SYSTEM_PROMPT,
-        },
-      });
+  for (const modelName of modelsToTry) {
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
+      try {
+        const response = await ai.models.generateContent({
+          model: modelName,
+          contents: prompt,
+          config: {
+            systemInstruction: SYSTEM_PROMPT,
+          },
+        });
 
-      return response.text;
-    } catch (error: any) {
-      lastError = error;
-      
-      // If it's a 429 error and we have retries left, wait and retry
-      if (error?.status === 429 || error?.message?.includes('429') || error?.message?.includes('RESOURCE_EXHAUSTED')) {
-        if (attempt < maxRetries) {
-          const waitTime = Math.pow(2, attempt) * 2000; // 2s, 4s, 8s
-          console.warn(`Rate limit hit. Retrying in ${waitTime}ms... (Attempt ${attempt + 1}/${maxRetries})`);
-          await new Promise(resolve => setTimeout(resolve, waitTime));
-          continue;
+        return response.text;
+      } catch (error: any) {
+        lastError = error;
+        
+        // If it's a 429 error and we have retries left, wait and retry
+        if (error?.status === 429 || error?.message?.includes('429') || error?.message?.includes('RESOURCE_EXHAUSTED')) {
+          if (attempt < maxRetries) {
+            const waitTime = Math.pow(2, attempt) * 3000; // 3s, 6s, 12s, 24s, 48s
+            console.warn(`Rate limit hit on ${modelName}. Retrying in ${waitTime}ms... (Attempt ${attempt + 1}/${maxRetries})`);
+            await new Promise(resolve => setTimeout(resolve, waitTime));
+            continue;
+          }
+          // If we exhausted retries for the pro model, we'll fall through to the next model in modelsToTry
+          console.warn(`Exhausted retries for ${modelName}. Trying fallback model if available...`);
+        } else {
+          // For other errors, throw immediately
+          throw error;
         }
       }
-      
-      // For other errors or if we're out of retries, throw
-      throw error;
     }
   }
 
