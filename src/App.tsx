@@ -135,30 +135,6 @@ export default function App() {
     <div className="min-h-screen bg-zinc-100 pb-20 selection:bg-jee-blue/20">
       {/* Header */}
       <header className="bg-white border-b border-zinc-200 sticky top-0 z-50 print:hidden">
-        {apiKeyMissing && (
-          <div className="bg-jee-red text-white text-center py-2 text-xs font-bold flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4 shadow-inner">
-            <div className="flex items-center gap-2">
-              ⚠️ GEMINI_API_KEY NOT DETECTED
-              <span className="opacity-70 font-normal italic">(Check Settings {'->'} Secrets)</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <button 
-                onClick={handleSelectKey}
-                className="bg-white text-jee-red px-3 py-1 rounded-full text-[10px] font-bold hover:bg-zinc-100 transition-colors shadow-sm active:scale-95"
-              >
-                Select Platform Key
-              </button>
-              <a 
-                href="https://ai.google.dev/gemini-api/docs/billing" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="text-white underline opacity-80 hover:opacity-100 text-[10px]"
-              >
-                Billing Info
-              </a>
-            </div>
-          </div>
-        )}
         <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-jee-black rounded-xl flex items-center justify-center shadow-lg">
@@ -171,6 +147,16 @@ export default function App() {
           </div>
 
           <div className="flex items-center gap-4">
+            {apiKeyMissing && (
+              <button 
+                onClick={handleSelectKey}
+                className="flex items-center gap-1.5 px-2 py-1 bg-amber-50 text-amber-600 rounded-md border border-amber-100 text-[10px] font-bold hover:bg-amber-100 transition-colors"
+                title="API Key not detected. Click to select platform key."
+              >
+                <Info className="w-3 h-3" />
+                API STATUS
+              </button>
+            )}
             {notes && (
               <>
                 <button
