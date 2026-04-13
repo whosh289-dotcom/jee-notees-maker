@@ -50,12 +50,18 @@ export default function App() {
       }
     } catch (error: any) {
       console.error("Generation failed:", error);
-      let message = "Failed to architect notes. Please try again.";
+      let message = "Failed to architect notes. ";
       
-      if (error?.status === 429 || error?.message?.includes('429') || error?.message?.includes('RESOURCE_EXHAUSTED')) {
-        message = "The AI is currently at maximum capacity. Please wait a few minutes and try again.";
-      } else if (error?.message?.includes('API key')) {
-        message = "Invalid API key. Please check your configuration.";
+      const errorStr = error?.message || String(error);
+      
+      if (error?.status === 429 || errorStr.includes('429') || errorStr.includes('RESOURCE_EXHAUSTED')) {
+        message += "The AI is currently at maximum capacity. Please wait a few minutes and try again.";
+      } else if (errorStr.toLowerCase().includes('api key')) {
+        message += "API key issue detected. Please check your configuration.";
+      } else if (errorStr.includes('safety')) {
+        message += "The request was flagged by safety filters. Try rephrasing your input.";
+      } else {
+        message += `Error details: ${errorStr.slice(0, 100)}${errorStr.length > 100 ? '...' : ''}`;
       }
       
       alert(message);

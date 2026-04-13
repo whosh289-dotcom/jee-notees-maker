@@ -95,6 +95,7 @@ export async function generateJEENotes(roughData: string, fileContext?: string) 
   for (const modelName of modelsToTry) {
     for (let attempt = 0; attempt <= maxRetries; attempt++) {
       try {
+        console.log(`Attempting generation with ${modelName} (Attempt ${attempt + 1})...`);
         const response = await ai.models.generateContent({
           model: modelName,
           contents: prompt,
@@ -103,24 +104,38 @@ export async function generateJEENotes(roughData: string, fileContext?: string) 
           },
         });
 
+        if (!response.text) {
+          throw new Error("AI returned an empty response. This might be due to safety filters.");
+        }
+
         return response.text;
       } catch (error: any) {
         lastError = error;
-        
-        // If it's a 429 error and we have retries left, wait and retry
-        if (error?.status === 429 || error?.message?.includes('429') || error?.message?.includes('RESOURCE_EXHAUSTED')) {
+        const errorMessage = error?.message || String(error);
+        const isRateLimit = error?.status === 429 || errorMessage.includes('429') || errorMessage.includes('RESOURCE_EXHAUSTED');
+        const isNotFound = error?.status === 404 || errorMessage.includes('404') || errorMessage.includes('not found');
+
+        // If it's a rate limit error, retry with backoff
+        if (isRateLimit) {
           if (attempt < maxRetries) {
-            const waitTime = Math.pow(2, attempt) * 3000; // 3s, 6s, 12s, 24s, 48s
-            console.warn(`Rate limit hit on ${modelName}. Retrying in ${waitTime}ms... (Attempt ${attempt + 1}/${maxRetries})`);
+            const waitTime = Math.pow(2, attempt) * 3000;
+            console.warn(`Rate limit hit on ${modelName}. Retrying in ${waitTime}ms...`);
             await new Promise(resolve => setTimeout(resolve, waitTime));
             continue;
           }
-          // If we exhausted retries for the pro model, we'll fall through to the next model in modelsToTry
-          console.warn(`Exhausted retries for ${modelName}. Trying fallback model if available...`);
-        } else {
-          // For other errors, throw immediately
-          throw error;
+          console.warn(`Exhausted retries for ${modelName} due to rate limits.`);
+          break; // Move to next model
+        } 
+        
+        // If the model is not found, move to the next model immediately
+        if (isNotFound) {
+          console.warn(`Model ${modelName} not found. Trying next model...`);
+          break; 
         }
+
+        // For other errors (like safety filters or 400), try the next model just in case
+        console.error(`Error with ${modelName}:`, errorMessage);
+        break; 
       }
     }
   }
