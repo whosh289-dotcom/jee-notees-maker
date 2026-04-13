@@ -1,15 +1,24 @@
 import { GoogleGenAI } from "@google/genai";
 
 const getApiKey = () => {
-  return process.env.GEMINI_API_KEY || 
-         process.env.GOOGLE_API_KEY ||
-         process.env.API_KEY ||
-         (import.meta as any).env?.GEMINI_API_KEY || 
-         (import.meta as any).env?.VITE_GEMINI_API_KEY || 
-         (import.meta as any).env?.GOOGLE_API_KEY ||
-         (import.meta as any).env?.VITE_GOOGLE_API_KEY ||
-         (import.meta as any).env?.API_KEY ||
-         "";
+  const key = process.env.GEMINI_API_KEY || 
+              process.env.GOOGLE_API_KEY ||
+              process.env.API_KEY ||
+              (import.meta as any).env?.GEMINI_API_KEY || 
+              (import.meta as any).env?.VITE_GEMINI_API_KEY || 
+              (import.meta as any).env?.GOOGLE_API_KEY ||
+              (import.meta as any).env?.VITE_GOOGLE_API_KEY ||
+              (import.meta as any).env?.API_KEY ||
+              "";
+  
+  // Log detection status (masked)
+  if (key && key.length > 5) {
+    console.log(`API Key detected (starts with: ${key.substring(0, 3)}...)`);
+  } else {
+    console.warn("No valid API key detected in environment.");
+  }
+  
+  return key;
 };
 
 const ai = new GoogleGenAI({ apiKey: getApiKey() });
