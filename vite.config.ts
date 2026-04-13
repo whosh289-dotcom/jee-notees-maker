@@ -14,6 +14,7 @@ export default defineConfig(({mode}) => {
       'process.env.GEMINI_API_KEY': JSON.stringify(mergedEnv.GEMINI_API_KEY || mergedEnv.VITE_GEMINI_API_KEY || ""),
       'process.env.GOOGLE_API_KEY': JSON.stringify(mergedEnv.GOOGLE_API_KEY || mergedEnv.VITE_GOOGLE_API_KEY || ""),
       'process.env.API_KEY': JSON.stringify(mergedEnv.API_KEY || mergedEnv.VITE_API_KEY || ""),
+      'process.env.PLATFORM_API_KEY': 'globalThis.process?.env?.API_KEY',
     },
     resolve: {
       alias: {

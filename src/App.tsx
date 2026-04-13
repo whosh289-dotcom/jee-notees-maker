@@ -22,27 +22,59 @@ export default function App() {
   const [isVerifying, setIsVerifying] = useState(false);
   const [history, setHistory] = useState<string[]>([]);
   const [apiKeyMissing, setApiKeyMissing] = useState(false);
+  const [isPlatformKey, setIsPlatformKey] = useState(false);
 
   useEffect(() => {
-    // Check for API key
-    const key = process.env.GEMINI_API_KEY || 
-                process.env.GOOGLE_API_KEY ||
-                process.env.API_KEY ||
-                (import.meta as any).env?.GEMINI_API_KEY ||
-                (import.meta as any).env?.VITE_GEMINI_API_KEY ||
-                (import.meta as any).env?.GOOGLE_API_KEY ||
-                (import.meta as any).env?.VITE_GOOGLE_API_KEY ||
-                (import.meta as any).env?.API_KEY;
-                
-    if (!key || key === "undefined" || key === "null") {
+    const checkKey = async () => {
+      // Check for manual key first
+      const key = process.env.GEMINI_API_KEY || 
+                  process.env.GOOGLE_API_KEY ||
+                  process.env.API_KEY ||
+                  (process.env as any).PLATFORM_API_KEY ||
+                  (import.meta as any).env?.GEMINI_API_KEY ||
+                  (import.meta as any).env?.VITE_GEMINI_API_KEY ||
+                  (import.meta as any).env?.GOOGLE_API_KEY ||
+                  (import.meta as any).env?.VITE_GOOGLE_API_KEY ||
+                  (import.meta as any).env?.API_KEY;
+                  
+      if (key && key !== "undefined" && key !== "null" && key.length > 5) {
+        setApiKeyMissing(false);
+        return;
+      }
+
+      // Check for platform key
+      if ((window as any).aistudio?.hasSelectedApiKey) {
+        try {
+          const hasKey = await (window as any).aistudio.hasSelectedApiKey();
+          if (hasKey) {
+            setApiKeyMissing(false);
+            setIsPlatformKey(true);
+            return;
+          }
+        } catch (e) {
+          console.warn("Error checking platform key:", e);
+        }
+      }
+
       setApiKeyMissing(true);
-    } else {
-      setApiKeyMissing(false);
-    }
+    };
+
+    // Initial check
+    checkKey();
     
-    // Session Persistence Acknowledgment
-    console.log("JEE Session Architect: Session active. Logic established. Tracking terminology.");
+    // Retry after 2 seconds to handle race conditions
+    const timer = setTimeout(checkKey, 2000);
+    
+    return () => clearTimeout(timer);
   }, []);
+
+  const handleSelectKey = async () => {
+    if ((window as any).aistudio?.openSelectKey) {
+      await (window as any).aistudio.openSelectKey();
+      setApiKeyMissing(false);
+      setIsPlatformKey(true);
+    }
+  };
 
   const handleGenerate = async (data: string, fileContext?: string) => {
     setIsLoading(true);
@@ -77,6 +109,10 @@ export default function App() {
         message += "API key issue detected. Please check your configuration.";
       } else if (errorStr.includes('safety')) {
         message += "The request was flagged by safety filters. Try rephrasing your input.";
+      } else if (errorStr.includes('Requested entity was not found')) {
+        message += "The selected API key is invalid or not found. Please re-select your key.";
+        setApiKeyMissing(true);
+        setIsPlatformKey(false);
       } else {
         message += `Error details: ${errorStr.slice(0, 100)}${errorStr.length > 100 ? '...' : ''}`;
       }
@@ -101,9 +137,27 @@ export default function App() {
       {/* Header */}
       <header className="bg-white border-b border-zinc-200 sticky top-0 z-50 print:hidden">
         {apiKeyMissing && (
-          <div className="bg-jee-red text-white text-center py-2 text-xs font-bold animate-pulse flex items-center justify-center gap-2">
-            ⚠️ GEMINI_API_KEY NOT DETECTED. 
-            <span className="opacity-70 font-normal italic">(Check Settings {'->'} Secrets)</span>
+          <div className="bg-jee-red text-white text-center py-2 text-xs font-bold flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4 shadow-inner">
+            <div className="flex items-center gap-2">
+              ⚠️ GEMINI_API_KEY NOT DETECTED
+              <span className="opacity-70 font-normal italic">(Check Settings {'->'} Secrets)</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <button 
+                onClick={handleSelectKey}
+                className="bg-white text-jee-red px-3 py-1 rounded-full text-[10px] font-bold hover:bg-zinc-100 transition-colors shadow-sm active:scale-95"
+              >
+                Select Platform Key
+              </button>
+              <a 
+                href="https://ai.google.dev/gemini-api/docs/billing" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-white underline opacity-80 hover:opacity-100 text-[10px]"
+              >
+                Billing Info
+              </a>
+            </div>
           </div>
         )}
         <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">

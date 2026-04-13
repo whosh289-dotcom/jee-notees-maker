@@ -4,6 +4,7 @@ const getApiKey = () => {
   const key = process.env.GEMINI_API_KEY || 
               process.env.GOOGLE_API_KEY ||
               process.env.API_KEY ||
+              (process.env as any).PLATFORM_API_KEY ||
               (import.meta as any).env?.GEMINI_API_KEY || 
               (import.meta as any).env?.VITE_GEMINI_API_KEY || 
               (import.meta as any).env?.GOOGLE_API_KEY ||
@@ -11,17 +12,8 @@ const getApiKey = () => {
               (import.meta as any).env?.API_KEY ||
               "";
   
-  // Log detection status (masked)
-  if (key && key.length > 5) {
-    console.log(`API Key detected (starts with: ${key.substring(0, 3)}...)`);
-  } else {
-    console.warn("No valid API key detected in environment.");
-  }
-  
   return key;
 };
-
-const ai = new GoogleGenAI({ apiKey: getApiKey() });
 
 export const SYSTEM_PROMPT = `
 # ROLE
@@ -102,6 +94,8 @@ export async function generateJEENotes(roughData: string, fileContext?: string) 
     throw new Error("GEMINI_API_KEY is not set. Please ensure your Gemini API key is configured in the settings.");
   }
 
+  const ai = new GoogleGenAI({ apiKey });
+
   const prompt = fileContext 
     ? `FILE CONTEXT:\n${fileContext}\n\nUSER INPUT:\n${roughData}`
     : roughData;
@@ -109,8 +103,8 @@ export async function generateJEENotes(roughData: string, fileContext?: string) 
   const maxRetries = 5;
   let lastError: any = null;
   const modelsToTry = [
+    "gemini-3-flash-preview",
     "gemini-3.1-pro-preview", 
-    "gemini-3-flash-preview", 
     "gemini-3.1-flash-lite-preview"
   ];
 
