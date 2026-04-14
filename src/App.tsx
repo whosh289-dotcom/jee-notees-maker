@@ -62,14 +62,8 @@ export default function App() {
       if (error?.status === 429 || errorStr.includes('429') || errorStr.includes('RESOURCE_EXHAUSTED')) {
         message += "The AI is currently at maximum capacity. Please wait a few minutes and try again.";
       } else if (errorStr.toLowerCase().includes('api key') || errorStr.includes('401') || errorStr.includes('403')) {
-        message += "API key issue detected. If you are using a platform key, please try re-selecting it.";
-        // Offer to re-select if platform is available
-        if ((window as any).aistudio?.openSelectKey) {
-          if (confirm(message + "\n\nWould you like to select a platform API key now?")) {
-            await (window as any).aistudio.openSelectKey();
-          }
-          return;
-        }
+        // Silent error handling as requested
+        return;
       } else if (errorStr.includes('safety')) {
         message += "The request was flagged by safety filters. Try rephrasing your input.";
       } else if (errorStr.includes('Requested entity was not found')) {
@@ -78,7 +72,7 @@ export default function App() {
         message += `Error details: ${errorStr.slice(0, 100)}${errorStr.length > 100 ? '...' : ''}`;
       }
       
-      alert(message);
+      // Removed alert(message) as requested by user
     } finally {
       setIsLoading(false);
       setIsVerifying(false);
