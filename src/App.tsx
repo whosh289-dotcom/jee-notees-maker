@@ -32,12 +32,12 @@ export default function App() {
     console.log("JEE Session Architect: Session active. Logic established. Tracking terminology.");
   }, []);
 
-  const handleGenerate = async (data: string, fileContext?: string) => {
+  const handleGenerate = async (data: string, fileContext?: string, customPrompt?: string) => {
     setIsLoading(true);
     setIsVerifying(false);
     try {
       // Phase 1: Generation
-      const result = await generateJEENotes(data, fileContext);
+      const result = await generateJEENotes(data, fileContext, customPrompt);
       
       if (result) {
         // Phase 2: Simulated Verification (to satisfy user request for "ai cross checking")

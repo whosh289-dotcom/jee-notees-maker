@@ -1,15 +1,18 @@
 import { useState, useRef } from 'react';
-import { Send, Loader2, FileText, Sparkles, Upload, X, File } from 'lucide-react';
+import { Send, Loader2, FileText, Sparkles, Upload, X, File, Link as LinkIcon } from 'lucide-react';
 import { cn } from '@/src/lib/utils';
 
 interface InputSectionProps {
-  onGenerate: (data: string, fileContext?: string) => Promise<void>;
+  onGenerate: (data: string, fileContext?: string, customPrompt?: string) => Promise<void>;
   isLoading: boolean;
   isVerifying: boolean;
 }
 
 export function InputSection({ onGenerate, isLoading, isVerifying }: InputSectionProps) {
   const [input, setInput] = useState('');
+  const [customPrompt, setCustomPrompt] = useState('');
+  const [url, setUrl] = useState('');
+  const [isFetchingUrl, setIsFetchingUrl] = useState(false);
   const [file, setFile] = useState<File | null>(null);
   const [fileContent, setFileContent] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -34,10 +37,34 @@ export function InputSection({ onGenerate, isLoading, isVerifying }: InputSectio
     }
   };
 
+  const handleFetchUrl = async () => {
+    if (!url.trim()) return;
+    
+    setIsFetchingUrl(true);
+    try {
+      const response = await fetch('/api/fetch-url', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: url.trim() }),
+      });
+      
+      const data = await response.json();
+      if (data.error) throw new Error(data.error);
+      
+      setInput(prev => prev ? `${prev}\n\n--- CONTENT FROM ${url} ---\n${data.content}` : data.content);
+      setUrl('');
+      alert("Successfully connected and imported notes from URL!");
+    } catch (error: any) {
+      console.error("Fetch error:", error);
+      alert(`Failed to connect: ${error.message}`);
+    } finally {
+      setIsFetchingUrl(false);
+    }
+  };
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if ((input.trim() || fileContent) && !isLoading) {
-      onGenerate(input, fileContent || undefined);
+      onGenerate(input, fileContent || undefined, customPrompt.trim() || undefined);
     }
   };
 
@@ -60,9 +87,48 @@ export function InputSection({ onGenerate, isLoading, isVerifying }: InputSectio
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder="Enter chapter name or paste rough notes. I will architect a full textbook-standard chapter for you."
-            className="w-full h-48 p-6 text-zinc-800 placeholder:text-zinc-300 focus:outline-none resize-none font-sans text-lg leading-relaxed"
+            className="w-full h-40 p-6 text-zinc-800 placeholder:text-zinc-300 focus:outline-none resize-none font-sans text-lg leading-relaxed"
             disabled={isLoading}
           />
+
+          <div className="px-6 pb-4 flex gap-2">
+            <div className="relative flex-1">
+              <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
+                <LinkIcon className="w-4 h-4 text-zinc-400" />
+              </div>
+              <input
+                type="url"
+                value={url}
+                onChange={(e) => setUrl(e.target.value)}
+                placeholder="Connect to URL (e.g. https://jee-notes-maker.lovable.app)"
+                className="w-full pl-10 pr-3 py-2 bg-zinc-50 border border-zinc-100 rounded-lg text-sm focus:outline-none focus:border-jee-blue/30 transition-colors"
+                disabled={isLoading || isFetchingUrl}
+              />
+            </div>
+            <button
+              type="button"
+              onClick={handleFetchUrl}
+              disabled={!url.trim() || isLoading || isFetchingUrl}
+              className="px-4 py-2 bg-jee-blue text-white rounded-lg text-sm font-bold hover:bg-blue-700 disabled:bg-zinc-200 disabled:text-zinc-400 transition-all flex items-center gap-2"
+            >
+              {isFetchingUrl ? <Loader2 className="w-4 h-4 animate-spin" /> : "Connect"}
+            </button>
+          </div>
+
+          <div className="px-6 pb-4">
+            <div className="flex items-center gap-2 mb-2 text-xs font-bold text-jee-blue uppercase tracking-wider">
+              <Sparkles className="w-3 h-3" />
+              Custom Focus / Instructions
+            </div>
+            <input
+              type="text"
+              value={customPrompt}
+              onChange={(e) => setCustomPrompt(e.target.value)}
+              placeholder="e.g., 'Focus on organic mechanisms', 'Include more derivations', 'Make it concise'"
+              className="w-full p-3 bg-zinc-50 border border-zinc-100 rounded-lg text-sm focus:outline-none focus:border-jee-blue/30 transition-colors"
+              disabled={isLoading}
+            />
+          </div>
 
           {/* File Preview */}
           {file && (
@@ -88,7 +154,27 @@ export function InputSection({ onGenerate, isLoading, isVerifying }: InputSectio
             </div>
           )}
 
-          <div className="p-4 bg-zinc-50/50 border-t border-zinc-100 flex justify-between items-center">
+          <div className="p-4 bg-zinc-50/50 border-t border-zinc-100">
+            <div className="flex flex-wrap gap-2 mb-4">
+              {[
+                "Focus on Organic Mechanisms",
+                "Include Numerical Problems",
+                "Derive from First Principles",
+                "Make it Concise",
+                "Add More PYQs"
+              ].map((p) => (
+                <button
+                  key={p}
+                  type="button"
+                  onClick={() => setCustomPrompt(p)}
+                  className="px-3 py-1 bg-white border border-zinc-200 rounded-full text-[10px] font-bold text-zinc-500 hover:border-jee-blue hover:text-jee-blue transition-colors"
+                >
+                  + {p}
+                </button>
+              ))}
+            </div>
+
+            <div className="flex justify-between items-center">
             <div className="flex items-center gap-2">
               <input
                 type="file"
@@ -131,6 +217,7 @@ export function InputSection({ onGenerate, isLoading, isVerifying }: InputSectio
             </button>
           </div>
         </div>
+      </div>
       </form>
     </div>
   );

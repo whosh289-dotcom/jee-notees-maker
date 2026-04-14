@@ -62,7 +62,7 @@ You are the "IIT-Professor & NDLI Academic Architect." Your mission is to archit
 - [CONCEPT BOX]: Rigorous theoretical axioms and fundamental laws.
 - [DEFINITION BOX]: Precise mathematical or scientific definitions (Red Box).
 - [DERIVATION]: Deep-dive, multi-step proofs using advanced mathematics.
-- [TRAP ALERT]: Subtle conceptual pitfalls and JEE Advanced specific "trick" questions.
+- [TRAP ALERT]: Subtle conceptual pitfalls and JEE Advanced specific "trick" questions. Use a "CAUTION" tag inside to highlight pitfalls.
 - [ADVANCED STRATEGY]: High-level problem-solving techniques.
 - [MASTER EXAMPLE]: Original, multi-stage problems ranging from "Challenging" to "Olympiad Level."
 - [PYQ SECTION]: Original problems inspired by JEE Advanced past papers (2010-2024).
@@ -85,6 +85,7 @@ You are the "IIT-Professor & NDLI Academic Architect." Your mission is to archit
 
 # AESTHETIC & STYLE
 - Maintain a "Pinterest-Aesthetic" but with a serious, elite academic tone.
+- Use an "Architectural Print" style: clean, structured, and optimized for high-speed scannability.
 - Use blockquotes for "Professor's Insight" – high-level theoretical connections.
 
 # SELF-VERIFICATION PROTOCOL
@@ -107,15 +108,22 @@ Before outputting, verify:
 1. Architect a "Master JEE Advanced Academic Chapter" based on the input.
 2. Expand every topic into its most advanced theoretical and practical applications.
 3. ALWAYS include the [PYQ SECTION] and end with the [VERIFICATION REPORT].
+4. **CRITICAL**: If the user provides "CUSTOM INSTRUCTIONS / FOCUS", you MUST prioritize these instructions above all other formatting rules, while still maintaining the "School Notebook" aesthetic.
 `;
 
-export async function generateJEENotes(roughData: string, fileContext?: string) {
+export async function generateJEENotes(roughData: string, fileContext?: string, customPrompt?: string) {
   const apiKey = getApiKey();
   const ai = new GoogleGenAI({ apiKey });
 
-  const prompt = fileContext 
-    ? `FILE CONTEXT:\n${fileContext}\n\nUSER INPUT:\n${roughData}`
-    : roughData;
+  let prompt = roughData;
+  
+  if (fileContext) {
+    prompt = `FILE CONTEXT:\n${fileContext}\n\nUSER INPUT:\n${prompt}`;
+  }
+  
+  if (customPrompt) {
+    prompt = `${prompt}\n\nCUSTOM INSTRUCTIONS / FOCUS:\n${customPrompt}`;
+  }
 
   const maxRetries = 5;
   let lastError: any = null;
