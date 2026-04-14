@@ -23,6 +23,11 @@ export default function App() {
   const [history, setHistory] = useState<string[]>([]);
 
   useEffect(() => {
+    // Diagnostic info for debugging published app
+    console.log("JEE Session Architect Initialized");
+    console.log("Build Time:", process.env.BUILD_TIME);
+    console.log("Environment:", process.env.NODE_ENV);
+    
     // Session Persistence Acknowledgment
     console.log("JEE Session Architect: Session active. Logic established. Tracking terminology.");
   }, []);
@@ -56,8 +61,15 @@ export default function App() {
       
       if (error?.status === 429 || errorStr.includes('429') || errorStr.includes('RESOURCE_EXHAUSTED')) {
         message += "The AI is currently at maximum capacity. Please wait a few minutes and try again.";
-      } else if (errorStr.toLowerCase().includes('api key')) {
-        message += "API key issue detected. Please check your configuration.";
+      } else if (errorStr.toLowerCase().includes('api key') || errorStr.includes('401') || errorStr.includes('403')) {
+        message += "API key issue detected. If you are using a platform key, please try re-selecting it.";
+        // Offer to re-select if platform is available
+        if ((window as any).aistudio?.openSelectKey) {
+          if (confirm(message + "\n\nWould you like to select a platform API key now?")) {
+            await (window as any).aistudio.openSelectKey();
+          }
+          return;
+        }
       } else if (errorStr.includes('safety')) {
         message += "The request was flagged by safety filters. Try rephrasing your input.";
       } else if (errorStr.includes('Requested entity was not found')) {

@@ -10,7 +10,10 @@ export default defineConfig(({mode}) => {
   const defineEnv: Record<string, string> = {};
   Object.keys(mergedEnv).forEach(key => {
     if (key.includes('KEY') || key.includes('GEMINI') || key.includes('GOOGLE')) {
-      defineEnv[`process.env.${key}`] = JSON.stringify(mergedEnv[key]);
+      const value = mergedEnv[key];
+      defineEnv[`process.env.${key}`] = JSON.stringify(value);
+      // Also expose as VITE_ variable for standard Vite behavior
+      defineEnv[`import.meta.env.VITE_${key}`] = JSON.stringify(value);
     }
   });
   
@@ -19,6 +22,7 @@ export default defineConfig(({mode}) => {
     define: {
       ...defineEnv,
       'process.env.NODE_ENV': JSON.stringify(mode),
+      'process.env.BUILD_TIME': JSON.stringify(new Date().toISOString()),
     },
     resolve: {
       alias: {

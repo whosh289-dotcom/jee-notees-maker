@@ -1,22 +1,29 @@
 import { GoogleGenAI } from "@google/genai";
 
 const getApiKey = () => {
+  // Log build info
+  console.log(`JEE Session Architect - Build Time: ${process.env.BUILD_TIME}`);
+
   // Try known keys first
   const knownKey = process.env.GEMINI_API_KEY || 
                    process.env.GOOGLE_API_KEY ||
                    process.env.API_KEY ||
-                   (import.meta as any).env?.VITE_GEMINI_API_KEY || 
-                   (import.meta as any).env?.VITE_GOOGLE_API_KEY ||
-                   (import.meta as any).env?.VITE_API_KEY;
+                   import.meta.env.VITE_GEMINI_API_KEY || 
+                   import.meta.env.VITE_GOOGLE_API_KEY ||
+                   import.meta.env.VITE_API_KEY;
   
   if (knownKey && knownKey !== "undefined" && knownKey !== "null" && knownKey.length > 5) {
+    console.log("API Key found via standard environment variables.");
     return knownKey;
   }
 
   // Fallback: search all process.env keys for anything that looks like an API key
   try {
     const allEnv = process.env as Record<string, string>;
-    for (const key in allEnv) {
+    const envKeys = Object.keys(allEnv);
+    console.log("Available environment keys:", envKeys.filter(k => k.includes('KEY') || k.includes('GEMINI') || k.includes('GOOGLE')));
+    
+    for (const key of envKeys) {
       if ((key.includes('KEY') || key.includes('GEMINI') || key.includes('GOOGLE')) && 
           allEnv[key] && 
           allEnv[key].length > 10) {
@@ -27,6 +34,9 @@ const getApiKey = () => {
   } catch (e) {
     // process.env might not be iterable in some environments
   }
+  
+  // Last resort: check window.aistudio if available (platform key selection)
+  // Note: This is only a fallback if no baked-in key is found
   
   return "";
 };
